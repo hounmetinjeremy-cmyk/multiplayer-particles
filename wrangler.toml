@@ -1,18 +1,14 @@
-name = "multiplayer-particles"
-main = "worker.js"
-compatibility_date = "2023-08-01"
+name = "efootball-cloudflare"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
 
-assets.directory = "./"
+# Serve static assets from public folder
+assets = { directory = "./public" }
 
-routes = [
-  { pattern = "cooldo.brubslabs.com", custom_domain = true }
-]
-
-[durable_objects]
-bindings = [
-  { name = "PARTICLE_ROOM", class_name = "ParticleRoom" }
-]
+[[durable_objects.bindings]]
+name = "FOOTBALL_ROOM"
+class_name = "FootballRoom"
 
 [[migrations]]
 tag = "v1"
-new_sqlite_classes = ["ParticleRoom"]
+new_classes = ["FootballRoom"]
