@@ -4,42 +4,28 @@ Jeu de football multijoueur en temps réel, hébergé sur **Cloudflare Workers +
 
 ## 🎮 Comment jouer
 
-1. Ouvre le lien du jeu dans ton navigateur
-2. Partage le lien à un ami
-3. Dès que l'adversaire se connecte, la partie commence
+1. Ouvre l'URL du Worker (ex: `https://efootball-cloudflare.hounmetinjeremy.workers.dev`)
+2. Partage le lien avec un ami (le paramètre `?room=...` crée une room unique)
+3. Quand 2 joueurs sont connectés, la partie commence automatiquement
 4. **Joueur 1 (Rouge)** : flèches directionnelles
-5. **Joueur 2 (Bleu)** : touches Z/Q/S/D ou W/A/S/D
+5. **Joueur 2 (Bleu)** : Z, Q, S, D ou W, A, S, D
 
-## 🏗 Architecture
+## 🏗 Fichiers
 
-- `src/index.js` → Worker Cloudflare + Durable Object (logique du jeu + WebSockets)
-- `public/index.html` → Interface du jeu
-- `public/game.js` → Client JavaScript (canvas, WebSocket, rendu)
-- `public/style.css` → Styles
+- `worker.js` → Worker + Durable Object (logique serveur, physique, WebSockets)
+- `index.html` → Interface du jeu
+- `styles.css` → Styles
+- `script.js` → Client JavaScript
 - `wrangler.toml` → Configuration Wrangler
 
 ## 🚀 Déploiement
 
-### Local
-
 ```bash
 npm install -g wrangler
 wrangler login
-wrangler dev
-```
-
-### Production
-
-```bash
 wrangler deploy
 ```
 
-## 🕹 Règles du jeu
-
-- 2 joueurs, un ballon, 2 buts
-- Premier à marquer 5 buts gagne
-- La physique et la synchronisation sont gérées par le serveur
-
 ## 📝 Note
 
-Ce projet est un fork adapté de [multiplayer-particles](https://github.com/supernovaio/multiplayer-particles).
+Forké et adapté depuis [multiplayer-particles](https://github.com/supernovaio/multiplayer-particles).
