@@ -1,231 +1,248 @@
-// Durable Object class for particle game
+// Durable Object eFootball game server
 export class ParticleRoom {
   constructor(state, env) {
     this.state = state;
     this.env = env;
-    this.sessions = new Map();
-    // Store last known positions to send to new connections
-    this.positions = new Map();
-    // Store player scores
-    this.scores = new Map();
+    this.sessions = new Map(); // ws -> { playerId, team }
+
+    this.width = 1000;
+    this.height = 600;
+    this.playerRadius = 18;
+    this.ballRadius = 12;
+    this.goalSize = 160;
+
+    this.stateObj = {
+      players: {}, // playerId -> {x, y, vx, vy, team}
+      ball: { x: this.width / 2, y: this.height / 2, vx: 0, vy: 0 },
+      scores: { red: 0, blue: 0 },
+      started: false,
+      width: this.width,
+      height: this.height
+    };
+
+    this.gameLoop = null;
   }
-  
-  // Handle new WebSocket connections
+
   async fetch(request) {
     const url = new URL(request.url);
-    
-    if (url.pathname === "/websocket") {
-      // Accept the WebSocket connection
-      if (request.headers.get("Upgrade") !== "websocket") {
-        return new Response("Expected WebSocket", { status: 400 });
+
+    if (url.pathname === '/websocket') {
+      if (this.sessions.size >= 2) {
+        return new Response('Room full', { status: 403 });
       }
-      
+      const upgradeHeader = request.headers.get('Upgrade');
+      if (upgradeHeader !== 'websocket') {
+        return new Response('Expected websocket', { status: 400 });
+      }
+
       const [client, server] = Object.values(new WebSocketPair());
-      await this.handleSession(server);
-      
-      return new Response(null, {
-        status: 101,
-        webSocket: client,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Headers": "Content-Type"
-        }
-      });
+      this.handleSession(server);
+      return new Response(null, { status: 101, webSocket: client });
     }
-    
-    return new Response("Not found", { status: 404 });
+
+    return new Response('Not found', { status: 404 });
   }
-  
-  // Handle WebSocket session
-  async handleSession(webSocket) {
-    webSocket.accept();
-    
-    const sessionId = crypto.randomUUID();
-    this.sessions.set(sessionId, webSocket);
-    
-    // Send the current participants to the new connection
-    const existingPositions = JSON.stringify({
-      type: "positions",
-      positions: Object.fromEntries(this.positions)
-    });
-    webSocket.send(existingPositions);
-    
-    // Send current scores to the new connection
-    if (this.scores.size > 0) {
-      const scoresData = JSON.stringify({
-        type: "scoreUpdate",
-        scores: Object.fromEntries(this.scores)
-      });
-      webSocket.send(scoresData);
+
+  async handleSession(ws) {
+    ws.accept();
+
+    const playerId = crypto.randomUUID();
+    const team = this.sessions.size === 0 ? 'red' : 'blue';
+    const startX = team === 'red' ? 250 : this.width - 250;
+    const startY = this.height / 2;
+
+    this.sessions.set(ws, { playerId, team });
+    this.stateObj.players[playerId] = { x: startX, y: startY, vx: 0, vy: 0, team };
+
+    ws.send(JSON.stringify({ type: 'init', playerId, team, state: this.stateObj }));
+    this.broadcast({ type: 'state', state: this.stateObj });
+
+    if (this.sessions.size === 2 && !this.stateObj.started) {
+      this.startGame();
     }
-    
-    // Set up event handlers
-    webSocket.addEventListener("message", async (msg) => {
+
+    ws.addEventListener('message', (event) => {
       try {
-        const data = JSON.parse(msg.data);
-        
-        if (data.type === "mousemove") {
-          // Store the cursor position
-          this.positions.set(sessionId, {
-            x: data.x,
-            y: data.y,
-            color: data.color || "#FFFFFF"
-          });
-          
-          // Broadcast cursor position to other clients
-          this.broadcast(sessionId, {
-            type: "position",
-            sessionId: sessionId,
-            x: data.x,
-            y: data.y,
-            color: data.color || "#FFFFFF"
-          });
-        }
-        // Handle particle state sync from leader
-        else if (data.type === "particleState") {
-          // Pass through the particle state to all clients
-          this.broadcast(sessionId, data);
-        }
-        // Handle particle collection events
-        else if (data.type === "particleCollected") {
-          // Broadcast the collection event to all other clients
-          this.broadcast(sessionId, data);
-        }
-        // Handle score updates
-        else if (data.type === "scoreUpdate") {
-          // Store the score
-          this.scores.set(sessionId, {
-            score: data.score,
-            name: data.name,
-            color: data.color
-          });
-          
-          // Broadcast to all clients
-          this.broadcast(sessionId, data);
-        }
-        // Handle powerup activation
-        else if (data.type === "powerupActivated") {
-          // Broadcast to all clients
-          this.broadcast(sessionId, data);
-        }
-        // Handle powerup deactivation
-        else if (data.type === "powerupDeactivated") {
-          // Broadcast to all clients
-          this.broadcast(sessionId, data);
-        }
-        // Handle leader updates
-        else if (data.type === "leaderUpdate") {
-          // Broadcast to all clients
-          this.broadcast(sessionId, data);
+        const data = JSON.parse(event.data);
+        if (data.type === 'input') {
+          this.handleInput(playerId, data.keys || []);
         }
       } catch (err) {
-        console.error("Error handling WebSocket message", err);
+        console.error('Bad message', err);
       }
     });
-    
-    webSocket.addEventListener("close", () => {
-      this.sessions.delete(sessionId);
-      this.positions.delete(sessionId);
-      this.scores.delete(sessionId);
-      
-      this.broadcast(sessionId, {
-        type: "leave",
-        sessionId: sessionId
-      });
+
+    ws.addEventListener('close', () => {
+      this.sessions.delete(ws);
+      delete this.stateObj.players[playerId];
+      this.broadcast({ type: 'state', state: this.stateObj });
+      if (this.sessions.size < 2) {
+        this.stopGame();
+      }
     });
-    
-    webSocket.send(JSON.stringify({
-      type: "connected",
-      sessionId: sessionId,
-      isLeader: this.sessions.size === 1 // First client is the leader
-    }));
   }
-  
-  // Broadcast message to all connected clients except the sender
-  broadcast(senderSessionId, message) {
-    const messageStr = typeof message === "string" ? message : JSON.stringify(message);
-    
-    for (const [sessionId, session] of this.sessions.entries()) {
-      if (sessionId !== senderSessionId) {
-        try {
-          session.send(messageStr);
-        } catch (err) {
-          console.error(`Error sending to session ${sessionId}:`, err);
-          this.sessions.delete(sessionId);
-        }
+
+  handleInput(playerId, keys) {
+    const p = this.stateObj.players[playerId];
+    if (!p) return;
+
+    const speed = 5;
+    let dx = 0;
+    let dy = 0;
+
+    if (keys.includes('ArrowUp') || keys.includes('w') || keys.includes('W') || keys.includes('z') || keys.includes('Z')) dy -= 1;
+    if (keys.includes('ArrowDown') || keys.includes('s') || keys.includes('S')) dy += 1;
+    if (keys.includes('ArrowLeft') || keys.includes('a') || keys.includes('A') || keys.includes('q') || keys.includes('Q')) dx -= 1;
+    if (keys.includes('ArrowRight') || keys.includes('d') || keys.includes('D')) dx += 1;
+
+    if (dx !== 0 && dy !== 0) {
+      const len = Math.sqrt(2);
+      dx /= len;
+      dy /= len;
+    }
+
+    p.vx = dx * speed;
+    p.vy = dy * speed;
+  }
+
+  startGame() {
+    this.stateObj.started = true;
+    this.broadcast({ type: 'start' });
+    this.gameLoop = setInterval(() => {
+      this.update();
+      this.broadcast({ type: 'state', state: this.stateObj });
+    }, 1000 / 60);
+  }
+
+  stopGame() {
+    this.stateObj.started = false;
+    if (this.gameLoop) {
+      clearInterval(this.gameLoop);
+      this.gameLoop = null;
+    }
+  }
+
+  update() {
+    const s = this.stateObj;
+
+    // Move players
+    for (const id in s.players) {
+      const p = s.players[id];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= 0.85;
+      p.vy *= 0.85;
+
+      if (p.x < this.playerRadius) p.x = this.playerRadius;
+      if (p.x > this.width - this.playerRadius) p.x = this.width - this.playerRadius;
+      if (p.y < this.playerRadius) p.y = this.playerRadius;
+      if (p.y > this.height - this.playerRadius) p.y = this.height - this.playerRadius;
+    }
+
+    // Move ball
+    s.ball.x += s.ball.vx;
+    s.ball.y += s.ball.vy;
+    s.ball.vx *= 0.985;
+    s.ball.vy *= 0.985;
+
+    // Ball boundary with goals
+    const goalTop = (this.height - this.goalSize) / 2;
+    const goalBottom = (this.height + this.goalSize) / 2;
+
+    if (s.ball.y >= goalTop && s.ball.y <= goalBottom) {
+      if (s.ball.x <= this.ballRadius) {
+        this.score('blue');
+        return;
+      }
+      if (s.ball.x >= this.width - this.ballRadius) {
+        this.score('red');
+        return;
+      }
+    }
+
+    if (s.ball.x < this.ballRadius) {
+      s.ball.x = this.ballRadius;
+      s.ball.vx *= -0.8;
+    }
+    if (s.ball.x > this.width - this.ballRadius) {
+      s.ball.x = this.width - this.ballRadius;
+      s.ball.vx *= -0.8;
+    }
+    if (s.ball.y < this.ballRadius) {
+      s.ball.y = this.ballRadius;
+      s.ball.vy *= -0.8;
+    }
+    if (s.ball.y > this.height - this.ballRadius) {
+      s.ball.y = this.height - this.ballRadius;
+      s.ball.vy *= -0.8;
+    }
+
+    // Player-ball collision
+    for (const id in s.players) {
+      const p = s.players[id];
+      const dx = s.ball.x - p.x;
+      const dy = s.ball.y - p.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const minDist = this.playerRadius + this.ballRadius;
+
+      if (dist < minDist) {
+        const angle = Math.atan2(dy, dx);
+        const force = 9;
+        s.ball.vx = Math.cos(angle) * force;
+        s.ball.vy = Math.sin(angle) * force;
+        const overlap = minDist - dist;
+        s.ball.x += Math.cos(angle) * overlap;
+        s.ball.y += Math.sin(angle) * overlap;
       }
     }
   }
-  
-  // Broadcast to all connected clients including the sender
-  broadcastToAll(message) {
-    const messageStr = typeof message === "string" ? message : JSON.stringify(message);
-    
-    for (const session of this.sessions.values()) {
+
+  score(team) {
+    this.stateObj.scores[team]++;
+    this.resetPositions();
+    this.broadcast({ type: 'score', team, scores: this.stateObj.scores });
+  }
+
+  resetPositions() {
+    const s = this.stateObj;
+    s.ball = { x: this.width / 2, y: this.height / 2, vx: 0, vy: 0 };
+    for (const id in s.players) {
+      const p = s.players[id];
+      p.x = p.team === 'red' ? 250 : this.width - 250;
+      p.y = this.height / 2;
+      p.vx = 0;
+      p.vy = 0;
+    }
+  }
+
+  broadcast(message) {
+    const data = JSON.stringify(message);
+    for (const ws of this.sessions.keys()) {
       try {
-        session.send(messageStr);
+        ws.send(data);
       } catch (err) {
-        console.error(`Error sending to session:`, err);
+        console.error('Broadcast error', err);
       }
     }
   }
 }
 
-// Main worker entry point
 export default {
   async fetch(request, env, ctx) {
-    try {
-      const url = new URL(request.url);
-      
-      if (request.method === "OPTIONS") {
-        return handleCors();
-      }
-  
-      if (url.pathname === "/room") {
-        const roomId = url.searchParams.get("roomId") || "default";
-        const roomObject = env.PARTICLE_ROOM.get(env.PARTICLE_ROOM.idFromName(roomId));
-        
-        const newUrl = new URL(url);
-        newUrl.pathname = "/websocket";
-        
-        return roomObject.fetch(new Request(newUrl, request));
-      }
-      
-      return new Response(JSON.stringify({
-        error: "Not found",
-        availableEndpoints: ["/", "/room"]
-      }), {
-        status: 404,
-        headers: {
-          "Content-Type": "application/json",
-          ...getCorsHeaders()
-        }
-      });
-    } catch (error) {
-      return new Response(JSON.stringify({
-        error: error.message || "Internal server error"
-      }), {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...getCorsHeaders()
-        }
-      });
+    const url = new URL(request.url);
+
+    // Static files
+    if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/styles.css' || url.pathname === '/script.js') {
+      try {
+        const filePath = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
+        const resp = await fetch(new URL(filePath, request.url));
+        if (resp.ok) return resp;
+      } catch (err) {}
     }
+
+    const roomId = url.searchParams.get('room') || 'default';
+    const id = env.PARTICLE_ROOM.idFromName(roomId);
+    const room = env.PARTICLE_ROOM.get(id);
+    return room.fetch(request);
   }
 };
-
-function handleCors() {
-  return new Response(null, {
-    status: 204,
-    headers: getCorsHeaders()
-  });
-}
-
-function getCorsHeaders() {
-  return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization"
-  };
-}
