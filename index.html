@@ -1,27 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Particle Collector Game</title>
+    <title>⚽ eFootball Cloudflare</title>
     <link rel="stylesheet" href="styles.css">
     <script src="script.js" defer></script>
 </head>
 <body>
-    <div id="status">Connecting...</div>
-    <div id="participants">Participants: 1</div>
-    <div id="scoreboard">Scoreboard:
+    <div id="status">Connexion...</div>
+    <div id="participants">Joueurs : 0 / 2</div>
+    <div id="scoreboard">
+        <span class="title">Scoreboard</span>
         <ul id="scores-list"></ul>
     </div>
-    <div id="timer">Time: 2:00</div>
-    <div id="game-info">Collect particles to earn points! Special particles are worth more.</div>
-    <div id="powerup-notification"></div>
-    <div id="countdown-overlay">Get Ready!</div>
-    <div id="game-over">
-        <h1>Game Over!</h1>
-        <div id="game-over-scores"></div>
-        <button id="restart-button">Play Again</button>
+    <div id="timer">00:00</div>
+
+    <div id="countdown-overlay">
+        <div>
+            <h2>En attente d'un adversaire...</h2>
+            <p>Partage ce lien :</p>
+            <input type="text" id="share-url" readonly>
+        </div>
     </div>
-    <canvas id="canvas"></canvas>
+
+    <div id="game-over" class="hidden">
+        <div id="winner-text">Match terminé !</div>
+        <button id="restart-btn" onclick="location.reload()">Rejouer</button>
+    </div>
+
+    <canvas id="canvas" width="1000" height="600"></canvas>
+
+    <div id="controls-info">
+        <div>🔴 Joueur 1 : Flèches directionnelles</div>
+        <div>🔵 Joueur 2 : Z, Q, S, D ou W, A, S, D</div>
+    </div>
 </body>
 </html>
