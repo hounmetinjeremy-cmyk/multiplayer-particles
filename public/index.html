@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eFootball Cloudflare - Jeu en ligne</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="container">
+        <header>
+            <h1>⚽ eFootball Cloudflare</h1>
+            <div id="status">Connexion...</div>
+        </header>
+
+        <div id="scoreboard">
+            <div class="team red">
+                <span class="team-name">Rouge</span>
+                <span class="score" id="red-score">0</span>
+            </div>
+            <div class="vs">VS</div>
+            <div class="team blue">
+                <span class="team-name">Bleu</span>
+                <span class="score" id="blue-score">0</span>
+            </div>
+        </div>
+
+        <div id="game-area">
+            <canvas id="gameCanvas" width="800" height="500"></canvas>
+            <div id="overlay">
+                <div id="waiting">
+                    <h2>En attente d'un adversaire...</h2>
+                    <p>Partage ce lien à un ami :</p>
+                    <input type="text" id="room-link" readonly>
+                    <p>Tu joues l'équipe Rouge. Les touches : Flèches directionnelles</p>
+                </div>
+                <div id="starting" class="hidden">
+                    <h2>Partie trouvée !</h2>
+                    <p>La partie commence dans <span id="countdown">3</span>...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="controls">
+            <div class="control-card">
+                <h3>🎮 Joueur 1 (Rouge)</h3>
+                <p>Flèches directionnelles pour bouger</p>
+            </div>
+            <div class="control-card">
+                <h3>🎮 Joueur 2 (Bleu)</h3>
+                <p>Touches Z, Q, S, D ou W, A, S, D pour bouger</p>
+            </div>
+        </div>
+
+        <footer>
+            <p>Hébergé sur Cloudflare Workers + Durable Objects + WebSockets</p>
+        </footer>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
