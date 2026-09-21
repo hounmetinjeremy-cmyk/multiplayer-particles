@@ -1,49 +1,45 @@
-# Multiplayer Particle Collector Game
+# ⚽ eFootball Cloudflare
 
-A real-time multiplayer particle collection game built with Cloudflare Workers and Durable Objects.
+Jeu de football multijoueur en temps réel, hébergé sur **Cloudflare Workers + Durable Objects + WebSockets**.
 
-## Features
+## 🎮 Comment jouer
 
-- **Real-time multiplayer** - See other players' cursors and compete live
-- **Particle collection** - Collect particles to earn points
-- **Special particles** - Higher value particles worth more points
-- **Powerups** - Speed Boost, Magnet, and Double Points
-- **Leader system** - Distributed game state management
-- **Responsive design** - Works on desktop and mobile
+1. Ouvre le lien du jeu dans ton navigateur
+2. Partage le lien à un ami
+3. Dès que l'adversaire se connecte, la partie commence
+4. **Joueur 1 (Rouge)** : flèches directionnelles
+5. **Joueur 2 (Bleu)** : touches Z/Q/S/D ou W/A/S/D
 
-## Tech Stack
+## 🏗 Architecture
 
-- **Frontend**: Vanilla JavaScript, HTML5 Canvas
-- **Backend**: Cloudflare Workers + Durable Objects
-- **Real-time**: WebSockets
-- **Deployment**: Cloudflare Pages/Workers
+- `src/index.js` → Worker Cloudflare + Durable Object (logique du jeu + WebSockets)
+- `public/index.html` → Interface du jeu
+- `public/game.js` → Client JavaScript (canvas, WebSocket, rendu)
+- `public/style.css` → Styles
+- `wrangler.toml` → Configuration Wrangler
 
-## Quick Start
+## 🚀 Déploiement
 
-1. Clone the repository
-2. Install Wrangler CLI: `npm install -g wrangler`
-3. Deploy: `wrangler deploy`
-4. Visit your deployed URL to play!
+### Local
 
-## Game Rules
+```bash
+npm install -g wrangler
+wrangler login
+wrangler dev
+```
 
-- Move your cursor to collect particles
-- Special particles (larger, glowing) are worth 5-9 points
-- Regular particles are worth 1 point
-- Powerups provide temporary abilities:
-  - ⚡ **Speed Boost**: Faster movement
-  - 🧲 **Magnet**: Larger collection radius
-  - ✨ **Double Points**: 2x point multiplier
-- Games last 2 minutes
-- Highest score wins!
+### Production
 
-## Configuration
+```bash
+wrangler deploy
+```
 
-Edit `wrangler.toml` to customize:
-- Domain routing
-- Durable Object bindings
-- Environment settings
+## 🕹 Règles du jeu
 
-## License
+- 2 joueurs, un ballon, 2 buts
+- Premier à marquer 5 buts gagne
+- La physique et la synchronisation sont gérées par le serveur
 
-MIT
+## 📝 Note
+
+Ce projet est un fork adapté de [multiplayer-particles](https://github.com/supernovaio/multiplayer-particles).
