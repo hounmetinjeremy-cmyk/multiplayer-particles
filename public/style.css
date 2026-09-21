@@ -1,0 +1,181 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: white;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#container {
+  width: 100%;
+  max-width: 900px;
+  padding: 20px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+header h1 {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  background: linear-gradient(90deg, #ff4d4d, #4d94ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+#status {
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+#scoreboard {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  margin-bottom: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 15px 30px;
+  border-radius: 16px;
+}
+
+.team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+}
+
+.team-name {
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.team.red .team-name { color: #ff6b6b; }
+.team.blue .team-name { color: #4d94ff; }
+
+.score {
+  font-size: 2.5rem;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+}
+
+.vs {
+  font-size: 1rem;
+  color: #888;
+  font-weight: bold;
+}
+
+#game-area {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  margin-bottom: 20px;
+}
+
+#gameCanvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #1e5631;
+}
+
+#overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+#overlay.hidden {
+  display: none;
+}
+
+#waiting, #starting {
+  text-align: center;
+  padding: 30px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  max-width: 90%;
+}
+
+#waiting h2, #starting h2 {
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+}
+
+#waiting p {
+  color: #ccc;
+  margin: 10px 0;
+}
+
+#room-link {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #555;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #4d94ff;
+  text-align: center;
+  margin: 10px 0;
+  font-size: 0.85rem;
+}
+
+#countdown {
+  font-size: 2rem;
+  color: #ffd700;
+  font-weight: bold;
+}
+
+#controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.control-card {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 15px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.control-card h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.control-card p {
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+footer {
+  text-align: center;
+  color: #666;
+  font-size: 0.8rem;
+  margin-top: auto;
+}
+
+@media (max-width: 600px) {
+  header h1 { font-size: 1.5rem; }
+  #controls { grid-template-columns: 1fr; }
+  .score { font-size: 2rem; }
+}
