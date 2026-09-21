@@ -1,30 +1,26 @@
 # ⚽ eFootball Cloudflare
 
-Jeu de football multijoueur en temps réel, hébergé sur **Cloudflare Workers + Durable Objects + WebSockets**.
+Jeu de football multijoueur en temps réel, hébergé gratuitement sur **Cloudflare Pages + Durable Objects + WebSockets**.
 
-## 🎮 Comment jouer
+## 🎮 Jouer
 
-1. Ouvre l'URL du Worker (ex: `https://efootball-cloudflare.hounmetinjeremy.workers.dev`)
-2. Partage le lien avec un ami (le paramètre `?room=...` crée une room unique)
-3. Quand 2 joueurs sont connectés, la partie commence automatiquement
-4. **Joueur 1 (Rouge)** : flèches directionnelles
-5. **Joueur 2 (Bleu)** : Z, Q, S, D ou W, A, S, D
+1. Ouvre le lien : https://multiplayer-particles.pages.dev
+2. Partage le même lien à un ami
+3. Quand 2 joueurs sont connectés, la partie commence
+4. 🔴 Joueur 1 : Flèches directionnelles
+5. 🔵 Joueur 2 : Z, Q, S, D ou W, A, S, D
 
-## 🏗 Fichiers
+## 📁 Fichiers
 
-- `worker.js` → Worker + Durable Object (logique serveur, physique, WebSockets)
 - `index.html` → Interface du jeu
 - `styles.css` → Styles
-- `script.js` → Client JavaScript
-- `wrangler.toml` → Configuration Wrangler
+- `script.js` → Client JavaScript (canvas + WebSocket)
+- `functions/_worker.js` → Pages Function + Durable Object (logique serveur)
+- `wrangler.toml` → Configuration Cloudflare
 
 ## 🚀 Déploiement
 
-```bash
-npm install -g wrangler
-wrangler login
-wrangler deploy
-```
+Déployé automatiquement à chaque push sur `main` via Cloudflare Pages.
 
 ## 📝 Note
 
