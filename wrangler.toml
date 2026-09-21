@@ -1,14 +1,14 @@
 name = "efootball-cloudflare"
-main = "src/index.js"
+main = "worker.js"
 compatibility_date = "2024-11-01"
 
-# Serve static assets from public folder
-assets = { directory = "./public" }
+# Static assets served by the Worker fallback
+send_metrics = false
 
 [[durable_objects.bindings]]
-name = "FOOTBALL_ROOM"
-class_name = "FootballRoom"
+name = "PARTICLE_ROOM"
+class_name = "ParticleRoom"
 
 [[migrations]]
 tag = "v1"
-new_classes = ["FootballRoom"]
+new_classes = ["ParticleRoom"]
