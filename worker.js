@@ -1,4 +1,4 @@
-// Durable Object eFootball game server
+// Cloudflare Worker + Durable Object for eFootball game
 export class ParticleRoom {
   constructor(state, env) {
     this.state = state;
@@ -160,24 +160,12 @@ export class ParticleRoom {
       }
     }
 
-    if (s.ball.x < this.ballRadius) {
-      s.ball.x = this.ballRadius;
-      s.ball.vx *= -0.8;
-    }
-    if (s.ball.x > this.width - this.ballRadius) {
-      s.ball.x = this.width - this.ballRadius;
-      s.ball.vx *= -0.8;
-    }
-    if (s.ball.y < this.ballRadius) {
-      s.ball.y = this.ballRadius;
-      s.ball.vy *= -0.8;
-    }
-    if (s.ball.y > this.height - this.ballRadius) {
-      s.ball.y = this.height - this.ballRadius;
-      s.ball.vy *= -0.8;
-    }
+    if (s.ball.x < this.ballRadius) { s.ball.x = this.ballRadius; s.ball.vx *= -0.8; }
+    if (s.ball.x > this.width - this.ballRadius) { s.ball.x = this.width - this.ballRadius; s.ball.vx *= -0.8; }
+    if (s.ball.y < this.ballRadius) { s.ball.y = this.ballRadius; s.ball.vy *= -0.8; }
+    if (s.ball.y > this.height - this.ballRadius) { s.ball.y = this.height - this.ballRadius; s.ball.vy *= -0.8; }
 
-    // Player-ball collision
+    // Player-ball collisions
     for (const id in s.players) {
       const p = s.players[id];
       const dx = s.ball.x - p.x;
@@ -231,12 +219,21 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // Static files
+    // Static files served from same Worker using fetch to origin or fallback
     if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/styles.css' || url.pathname === '/script.js') {
       try {
         const filePath = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
-        const resp = await fetch(new URL(filePath, request.url));
-        if (resp.ok) return resp;
+        const githubRawUrl = `https://raw.githubusercontent.com/hounmetinjeremy-cmyk/multiplayer-particles/main/${filePath}`;
+        const resp = await fetch(githubRawUrl, {
+          headers: { 'User-Agent': 'CloudflareWorker' }
+        });
+        if (resp.ok) {
+          const contentType = filePath.endsWith('.css') ? 'text/css' :
+                              filePath.endsWith('.js') ? 'application/javascript' : 'text/html';
+          return new Response(resp.body, {
+            headers: { 'Content-Type': contentType }
+          });
+        }
       } catch (err) {}
     }
 
