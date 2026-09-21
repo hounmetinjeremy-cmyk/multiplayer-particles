@@ -1,5 +1,4 @@
-name = "efootball-cloudflare"
-main = "worker.js"
+name = "multiplayer-particles"
 compatibility_date = "2024-11-01"
 
 [[durable_objects.bindings]]
